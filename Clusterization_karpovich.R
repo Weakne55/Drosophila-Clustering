@@ -76,6 +76,7 @@ ecoli_chip_anno["is_promoter"] <- grepl('<=1kb', ecoli_chip_anno$annotation)
 
 ecoli_promoters <- ecoli_chip_anno[ecoli_chip_anno$is_promoter == 'TRUE',]
 
+ecoli_promoters_increase <- ecoli_promoters[ecoli_promoters$log2foldchange > 0.5,]
 
 
 
