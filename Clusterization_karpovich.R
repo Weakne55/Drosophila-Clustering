@@ -8,6 +8,7 @@ library(tidyverse)
 library(ggrepel)
 library(clusterProfiler)
 library(org.Dm.eg.db)
+library(EnhancedVolcano)
 
 
 ecoli_chip_path <- 'Dmel_immunity/ChIP/Ecoli_3_vs_Control_1_peak_compare_table.tsv'
@@ -122,6 +123,34 @@ ecoli_genes_FC05 <- unique(ecoli_promoters_increase$geneId)
 mlut_genes_FC05 <- unique(mlut_promoters_increase$geneId)
 
 length(unique(ecoli_genes_FC05))
-length(intersect(mlut_genes_FC05,ecoli_genes_FC05)) # пересечение в 406 генах
+length(intersect(mlut_genes_FC05,ecoli_genes_FC05)) # пересечение в 406 генах для Ecoli и Mluteus
+
+candidates <- intersect(mlut_genes_FC05,ecoli_genes_FC05) # получим список генов 
+# рядом с которыми растут пики chip-seq у Ecoli и Mluteus
+
+# top_rna <- ecoli_rna[['gene_id']] %in% candidates
+
+# посмотрим что происходит с экспрессией в этих генах
+top_rna <- ecoli_rna[ecoli_rna$gene_id %in% candidates,] # получаем те гены, про которые есть информация в rna-seq у Ecoli 
+dim(top_rna) # в рнк есть информация про 309 из 406 интересующих нас генов
+length(unique(candidates)) 
+length(unique(ecoli_rna$gene_id)) # всего у нас в рнк секе генов
 
 
+## Simple function for plotting a Volcano plot, returns a ggplot object
+deseq.volcano <- function(res, datasetName) {
+  return(EnhancedVolcano(res, x = 'log2FoldChange', y = 'padj',
+                         lab=res$gene_name,
+                         title = paste(datasetName, "RNA genes near high FC chip-seq peaks"),
+                         subtitle = bquote(italic('FDR <= 0.05 and absolute FC >= 2')),
+                         # Change text and icon sizes
+                         labSize = 3, pointSize = 1.5, axisLabSize=10, titleLabSize=12,
+                         subtitleLabSize=8, captionLabSize=10,
+                         # Disable legend
+                         legendPosition = "none",
+                         # Set cutoffs
+                         pCutoff = 0.05, FCcutoff = 2))
+}
+
+## Note: input data is the corrected DESeq2 output using the 'lfcShrink' function (see chapter 4)
+deseq.volcano(res = top_rna, datasetName = "Drosophila")
